@@ -1,4 +1,12 @@
+{
+  https://github.com/davidberneda/Diverse-Collection-Items
+}
 unit Tee.Collection;
+
+{
+  Enable design-time persistence of TCollection properties with
+  different TCollectionItem classes.
+}
 
 interface
 
@@ -21,8 +29,18 @@ class procedure TPersistCollection.Read(const ACollection:TCollection;
                                         const AReader:TReader);
 
   procedure ReadItems;
+
+    procedure ReadProperties(const AItem:TPersistent);
+    begin
+      AReader.ReadListBegin;
+
+      while not AReader.EndOfList do
+            TReaderAccess(AReader).ReadProperty(AItem);
+
+      AReader.ReadListEnd;
+    end;
+
   var t : Integer;
-     Item : TPersistent;
   begin
     AReader.ReadValue;
 
@@ -35,14 +53,7 @@ class procedure TPersistCollection.Read(const ACollection:TCollection;
         if AReader.NextValue in [vaInt8, vaInt16, vaInt32] then
            AReader.ReadInteger;
 
-        Item := ACollection.Items[t];
-
-        AReader.ReadListBegin;
-
-        while not AReader.EndOfList do
-              TReaderAccess(AReader).ReadProperty(Item);
-
-        AReader.ReadListEnd;
+        ReadProperties(ACollection.Items[t]);
 
         Inc(t);
       end;
@@ -54,27 +65,26 @@ class procedure TPersistCollection.Read(const ACollection:TCollection;
   end;
 
   procedure CreateItems;
-  var tmp,
+
+    function ItemClassName:String;
+    begin
+      result:=AReader.ReadString;
+
+      if result='' then
+         result:=ACollection.ItemClass.ClassName;
+    end;
+
+  var Count,
       t : Integer;
-      tmpClass : TClass;
-      tmpS : String;
   begin
-    tmp:=AReader.ReadInteger;
+    Count:=AReader.ReadInteger;
 
     ACollection.BeginUpdate;
     try
       ACollection.Clear;
 
-      for t:=0 to tmp-1 do
-      begin
-        tmpS:=AReader.ReadString;
-
-        if tmpS='' then
-           tmpS:=ACollection.ItemClass.ClassName;
-
-        tmpClass:=FindClass(tmpS);
-        TCollectionItemClass(tmpClass).Create(ACollection);
-      end;
+      for t:=0 to Count-1 do
+          TCollectionItemClass(FindClass(ItemClassName)).Create(ACollection);
     finally
       ACollection.EndUpdate;
     end;
@@ -93,20 +103,21 @@ class procedure TPersistCollection.Write(const ACollection:TCollection;
                                          const AWriter:TWriter);
 
   procedure WriteItems;
-  var t : Integer;
-      tmp : TPersistent;
+
+    function ItemClassOf(const AItem:TPersistent):String;
+    begin
+      if AItem.ClassType=ACollection.ItemClass then
+         result:=''
+      else
+         result:=AItem.ClassName;
+    end;
+
+  var Item : TPersistent;
   begin
     AWriter.WriteInteger(ACollection.Count);
 
-    for t := 0 to ACollection.Count - 1 do
-    begin
-      tmp:=ACollection.Items[t];
-
-      if tmp.ClassType=ACollection.ItemClass then
-         AWriter.WriteString('')
-      else
-         AWriter.WriteString(tmp.ClassName);
-    end;
+    for Item in ACollection do
+        AWriter.WriteString(ItemClassOf(Item));
   end;
 
 begin

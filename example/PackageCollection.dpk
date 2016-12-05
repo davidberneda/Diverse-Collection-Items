@@ -28,10 +28,12 @@ package PackageCollection;
 {$IMPLICITBUILD ON}
 
 requires
-  rtl;
+  rtl,
+  designide;
 
 contains
   MyComponent in 'MyComponent.pas',
-  Tee.Collection in 'Tee.Collection.pas';
+  Tee.Collection in '..\source\Tee.Collection.pas',
+  MyComponentRegister in 'MyComponentRegister.pas';
 
 end.

@@ -6,12 +6,15 @@ uses
   Classes;
 
 type
+  // Base Item class
   TItem=class(TCollectionItem)
   private
     FFoo : String;
   published
     property Foo:String read FFoo write FFoo;
   end;
+
+  // Some more Item classes examples
 
   TItem2=class(TItem)
   private
@@ -20,7 +23,16 @@ type
     property Bar:Integer read FBar write FBar;
   end;
 
-  TColl=class(TOwnedCollection)
+  TItem3=class(TItem2)
+  private
+    FTest : Single;
+  published
+    property Test:Single read FTest write FTest;
+  end;
+
+  // Simple TCollection, using base class TItem
+
+  TMyCollection=class(TOwnedCollection)
   private
     function Get(Index:Integer):TItem;
     procedure Put(Index:Integer; Item:TItem);
@@ -28,77 +40,77 @@ type
     property Items[Index:Integer]:TItem read Get write Put; default;
   end;
 
+  // Example Component
+
   TComp=class(TComponent)
   private
-    FColl : TColl;
+    FCollection : TMyCollection;
 
-    procedure ReadColl(Reader: TReader);
-    procedure WriteColl(Writer: TWriter);
-    procedure SetColl(Value:TColl);
+    procedure ReadCollection(Reader: TReader);
+    procedure WriteCollection(Writer: TWriter);
+    procedure SetCollection(const Value:TMyCollection);
   protected
     procedure DefineProperties(Filer: TFiler); override;
   public
     Constructor Create(Owner:TComponent); override;
     Destructor Destroy; override;
   published
-    property Coll:TColl read FColl write SetColl stored False;
+    property Collection:TMyCollection read FCollection write SetCollection stored False;
   end;
-
-procedure Register;
 
 implementation
 
 uses
   Tee.Collection;
 
-function TColl.Get(Index:Integer):TItem;
+{ TMyCollection }
+
+function TMyCollection.Get(Index:Integer):TItem;
 begin
   result:=inherited Items[Index] as TItem;
 end;
 
-procedure TColl.Put(Index:Integer; Item:TItem);
+procedure TMyCollection.Put(Index:Integer; Item:TItem);
 begin
   inherited Items[Index]:=Item;
 end;
 
+{ TComp }
+
 Constructor TComp.Create(Owner:TComponent);
 begin
   inherited;
-  FColl:=TColl.Create(Self,TItem);
+  FCollection:=TMyCollection.Create(Self,TItem);
 end;
 
 Destructor TComp.Destroy;
 begin
-  FColl.Free;
+  FCollection.Free;
   inherited;
 end;
 
-procedure TComp.SetColl(Value:TColl);
+procedure TComp.SetCollection(const Value:TMyCollection);
 begin
-  FColl.Assign(Value);
+  FCollection.Assign(Value);
 end;
 
 procedure TComp.DefineProperties(Filer: TFiler);
 begin
   inherited;
-  Filer.DefineProperty('_Coll',ReadColl,WriteColl,FColl.Count>0);
+  Filer.DefineProperty('_Coll',ReadCollection,WriteCollection,FCollection.Count>0);
 end;
 
-procedure TComp.ReadColl(Reader: TReader);
+procedure TComp.ReadCollection(Reader: TReader);
 begin
-  TPersistCollection.Read(FColl,Reader);
+  TPersistCollection.Read(FCollection,Reader);
 end;
 
-procedure TComp.WriteColl(Writer: TWriter);
+procedure TComp.WriteCollection(Writer: TWriter);
 begin
-  TPersistCollection.Write(FColl,Writer);
+  TPersistCollection.Write(FCollection,Writer);
 end;
 
-procedure Register;
-begin
-  RegisterComponents('TColl',[TComp]);
-end;
-
+// Important, Item classes must be registered
 initialization
-  RegisterClasses([TItem,TItem2]);
+  RegisterClasses([TItem,TItem2,TItem3]);
 end.

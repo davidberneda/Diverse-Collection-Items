@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{19C2547C-E7C6-4621-91FC-4D4428D18E65}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="PackageCollection.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Test_TCollection.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="PackageCollection">
+        <MSBuild Projects="PackageCollection.dproj"/>
+    </Target>
+    <Target Name="PackageCollection:Clean">
+        <MSBuild Projects="PackageCollection.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="PackageCollection:Make">
+        <MSBuild Projects="PackageCollection.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Test_TCollection">
+        <MSBuild Projects="Test_TCollection.dproj"/>
+    </Target>
+    <Target Name="Test_TCollection:Clean">
+        <MSBuild Projects="Test_TCollection.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Test_TCollection:Make">
+        <MSBuild Projects="Test_TCollection.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="PackageCollection;Test_TCollection"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="PackageCollection:Clean;Test_TCollection:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="PackageCollection:Make;Test_TCollection:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
